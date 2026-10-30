@@ -1,0 +1,16 @@
+# Startup profile for primary dex layout. Same role as a native app's
+# startup-prof.txt. Regenerate from a device once feature screens exist.
+Lcom/example/anit_scan_2/MainActivity;
+Lio/flutter/embedding/android/FlutterActivity;
+Lio/flutter/embedding/android/FlutterActivityAndFragmentDelegate;
+Lio/flutter/embedding/engine/FlutterEngine;
+Lio/flutter/embedding/engine/loader/FlutterLoader;
+Lio/flutter/embedding/engine/FlutterJNI;
+Lio/flutter/plugins/GeneratedPluginRegistrant;
+SPLcom/example/anit_scan_2/MainActivity;-><init>()V
+SPLcom/example/anit_scan_2/MainActivity;->onCreate(Landroid/os/Bundle;)V
+SPLcom/example/anit_scan_2/MainActivity;->configureFlutterEngine(Lio/flutter/embedding/engine/FlutterEngine;)V
+SPLio/flutter/embedding/android/FlutterActivity;-><init>()V
+SPLio/flutter/embedding/android/FlutterActivity;->onCreate(Landroid/os/Bundle;)V
+SPLio/flutter/embedding/android/FlutterActivity;->configureFlutterEngine(Lio/flutter/embedding/engine/FlutterEngine;)V
+SPLio/flutter/plugins/GeneratedPluginRegistrant;->registerWith(Lio/flutter/embedding/engine/FlutterEngine;)V

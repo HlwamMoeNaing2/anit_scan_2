@@ -1,0 +1,10 @@
+# Baseline profile compiled ahead of time on install.
+# Flutter's engine also ships its own profile. These rules cover the app
+# process startup that a native Baseline Profile Generator would record.
+HSPLcom/example/anit_scan_2/MainActivity;-><init>()V
+HSPLcom/example/anit_scan_2/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/example/anit_scan_2/MainActivity;->configureFlutterEngine(Lio/flutter/embedding/engine/FlutterEngine;)V
+HSPLio/flutter/embedding/android/FlutterActivity;-><init>()V
+HSPLio/flutter/embedding/android/FlutterActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLio/flutter/embedding/android/FlutterActivity;->configureFlutterEngine(Lio/flutter/embedding/engine/FlutterEngine;)V
+HSPLio/flutter/plugins/GeneratedPluginRegistrant;->registerWith(Lio/flutter/embedding/engine/FlutterEngine;)V

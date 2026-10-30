@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.example.anit_scan_2"
     compileSdk = flutter.compileSdkVersion
+    // NDK r28+ (Flutter 3.47 ships 28.2) aligns native libraries to 16 KB pages.
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -15,24 +16,42 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.anit_scan_2"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Android 10. Android 8 and 9 no longer receive security patches.
+        // Drop this to 26 only if a known device fleet is still on Android 8.
+        minSdk = 29
+        // Flutter 3.47 sets this to 36 (Android 16). Keep the Flutter value so
+        // the Play target stays on the current required API.
         targetSdk = flutter.targetSdkVersion
-        // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
-        // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
-        // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
-        // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    packaging {
+        jniLibs {
+            // Uncompressed native libs are required for 16 KB zip alignment.
+            useLegacyPackaging = false
+        }
+    }
+
+    bundle {
+        abi.enableSplit = true
+        density.enableSplit = true
+        language.enableSplit = true
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
+            // Replace this with the government upload key before a store build.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -46,4 +65,18 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Installs the checked-in baseline profile on first launch, the same
+    // library a native app uses when Play has not delivered a cloud profile yet.
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+}
+
+// Firebase plugins fail the build without google-services.json.
+// `flutterfire configure` creates that file. Until then the app still compiles
+// and Crashlytics stays disabled.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }

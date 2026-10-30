@@ -12,5 +12,19 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let channel = FlutterMethodChannel(
+      name: "com.example.anit_scan_2/security",
+      binaryMessenger: engineBridge.applicationRegistrar.messenger()
+    )
+    channel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "setScreenCaptureBlocked":
+        // iOS does not let an app block screenshots. The Flutter privacy cover
+        // hides the app-switcher snapshot. Android uses FLAG_SECURE.
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
   }
 }
