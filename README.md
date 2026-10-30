@@ -94,7 +94,7 @@ Put `google-services.json` in `android/app`. Put `GoogleService-Info.plist` in `
 
 Collection is enabled only in release builds. Debug crashes stay off the Firebase console.
 
-The current Firebase Android plugins still apply the Kotlin Gradle Plugin. This project keeps `android.builtInKotlin=false`, which is what Flutter 3.47 expects today. A build prints a warning that a future Flutter version will reject those plugins. Leave the flag as it is until FlutterFire supports built-in Kotlin.
+`android.builtInKotlin=true` in `android/gradle.properties`. AGP 9 compiles Kotlin. `android/settings.gradle.kts` rewrites the Firebase fallback so Flutter 3.47 does not warn about the Kotlin Gradle Plugin. The fallback still applies that plugin only when the Android Gradle Plugin is older than 9. The same file annotates the deprecated token calls inside `firebase_messaging`, because JDK 17 prints that compiler note even with `-nowarn`. `flutter pub get` restores both plugin copies, and the next Gradle run writes them again.
 
 ## Security already in the shell
 
