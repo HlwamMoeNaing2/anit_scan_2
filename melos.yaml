@@ -1,0 +1,25 @@
+name: government_app
+
+packages:
+  - apps/*
+  - packages/core/*
+  - packages/design_system
+  - packages/features/*
+
+command:
+  bootstrap:
+    usePubspecOverrides: false
+
+scripts:
+  analyze:
+    exec: dart analyze .
+  test:
+    exec: flutter test
+    packageFilters:
+      flutter: true
+      dirExists: test
+  test:common:
+    exec: dart test
+    packageFilters:
+      flutter: false
+      dirExists: test

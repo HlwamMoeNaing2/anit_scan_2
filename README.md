@@ -1,18 +1,23 @@
 # Anit Scan 2
 
-Production shell for the government client. Screens and features are not in this branch. The shell is the app module. Networking and on-device storage are the `anit_data` module. Shared state and error types are `anit_core`.
+Production shell for the government client. The runnable app is `apps/mobile_app`. Shared utilities live in `packages/core`. The only feature right now is `feature_post`.
 
 ## Modules
 
 ```
-lib/                          app module: navigation, view models, composition
-  app/                        startup, theme, privacy cover
-  di/providers.dart           Riverpod graph. This is the only composition root
-  routing/app_router.dart     every route is registered here
-  presentation/view_model.dart
-  features/                   next branch: one folder per screen
-packages/anit_core            UiState, Failure, Result, SessionStore
-packages/anit_data            Dio, Drift, secure storage, preferences
+apps/mobile_app/lib/          startup and navigation
+  app/                        bootstrap, Firebase, privacy cover
+  routing/                    every route is registered here
+packages/core/core_common     error, logging, UiState, SessionStore
+packages/core/core_network    Dio client
+packages/core/core_storage    Keystore and preferences
+packages/core/core_database   shared SQLite connection
+packages/core/core_ui         ViewModel base class
+packages/design_system        theme
+packages/features/feature_post
+  data/                       API, Drift table, repository implementation
+  domain/                     entity, repository contract, use case
+  presentation/               providers, screen, widgets
 ```
 
 A screen does not create its own `MaterialApp` or its own `Dio`. The view model calls `launch`, which turns a `Result` into `UiState`.
@@ -20,12 +25,14 @@ A screen does not create its own `MaterialApp` or its own `Dio`. The view model 
 ```dart
 class ExampleViewModel extends ViewModel<Example> {
   Future<void> load() {
-    return launch(() => guardCall(() => ref.read(repositoryProvider).load()));
+    return launch(() => ref.read(refreshExampleProvider).call());
   }
 }
 ```
 
 The screen uses `ref.watch(exampleViewModelProvider)` and `state.when(...)`.
+
+Run commands from `apps/mobile_app`, except `dart pub get` and `melos`, which run at the repository root.
 
 ## Packages
 
@@ -43,7 +50,7 @@ Riverpod is the dependency injection. A second container such as get_it is not u
 | Crash reports | `firebase_crashlytics` | Google / FlutterFire. Wired now |
 | Push | `firebase_messaging` | Registered only. Permission prompt and notification UI are the next feature |
 
-Drift replaces Room. A Drift table is an `@Entity`, a query on `AppDatabase` is a DAO, and `schemaVersion` plus `migration` are the Room migration. The old `sqlite3_flutter_libs` plugin is an empty end-of-life package that Drift pulls in so the old build path cannot return. Do not add it yourself.
+Drift replaces Room. A Drift table is an `@Entity`, a query on `PostDatabase` is a DAO, and `schemaVersion` plus `migration` are the Room migration. The connection itself is `openAppDatabase` in `core_database`. The old `sqlite3_flutter_libs` plugin is an empty end-of-life package that Drift pulls in so the old build path cannot return. Do not add it yourself.
 
 ## Platform versions
 
@@ -60,6 +67,7 @@ Drift replaces Room. A Drift table is an `@Entity`, a query on `AppDatabase` is 
 R8 full mode is on in AGP 9. The release build minifies and optimizes dex with `proguard-android-optimize.txt`, shrinks resources, and keeps line numbers for Crashlytics. Dart code is obfuscated separately:
 
 ```sh
+cd apps/mobile_app
 flutter build appbundle --release --obfuscate --split-debug-info=build/debug-info
 ```
 
@@ -68,10 +76,10 @@ Keep `build/debug-info` with the store build. It is the map for Dart stack trace
 16 KB pages: NDK r28 aligns native code, and `useLegacyPackaging = false` stores those libraries uncompressed so the package stays zip-aligned. After a release APK:
 
 ```sh
-sh tool/check_16kb_alignment.sh build/app/outputs/flutter-apk/app-release.apk
+sh apps/mobile_app/tool/check_16kb_alignment.sh apps/mobile_app/build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Baseline profiles are checked in at `android/app/src/main/baselineProfiles/`. `androidx.profileinstaller` installs them on first launch. `startup-prof.txt` is the dex layout file a native app uses to keep startup classes in the primary dex. `android/baselineprofile/StartupBaselineProfile.kt` is the instrumentation test shape. It is not on the Gradle classpath until the first screen exists. Replace the checked-in rules with a device recording at that point.
+Baseline profiles are checked in at `apps/mobile_app/android/app/src/main/baselineProfiles/`. `androidx.profileinstaller` installs them on first launch. `startup-prof.txt` is the dex layout file a native app uses to keep startup classes in the primary dex. `apps/mobile_app/android/baselineprofile/StartupBaselineProfile.kt` is the instrumentation test shape. It is not on the Gradle classpath until the first screen exists. Replace the checked-in rules with a device recording at that point.
 
 ## iOS
 
@@ -94,7 +102,7 @@ Put `google-services.json` in `android/app`. Put `GoogleService-Info.plist` in `
 
 Collection is enabled only in release builds. Debug crashes stay off the Firebase console.
 
-`android.builtInKotlin=true` in `android/gradle.properties`. AGP 9 compiles Kotlin. `android/settings.gradle.kts` rewrites the Firebase fallback so Flutter 3.47 does not warn about the Kotlin Gradle Plugin. The fallback still applies that plugin only when the Android Gradle Plugin is older than 9. The same file annotates the deprecated token calls inside `firebase_messaging`, because JDK 17 prints that compiler note even with `-nowarn`. `flutter pub get` restores both plugin copies, and the next Gradle run writes them again.
+`apps/mobile_app/android/gradle.properties` sets `android.builtInKotlin=true`. AGP 9 compiles Kotlin. `apps/mobile_app/android/settings.gradle.kts` rewrites the Firebase fallback so Flutter 3.47 does not warn about the Kotlin Gradle Plugin. The fallback still applies that plugin only when the Android Gradle Plugin is older than 9. The same file annotates the deprecated token calls inside `firebase_messaging`, because JDK 17 prints that compiler note even with `-nowarn`. `flutter pub get` restores both plugin copies, and the next Gradle run writes them again.
 
 ## Security already in the shell
 
@@ -109,11 +117,10 @@ Collection is enabled only in release builds. Debug crashes stay off the Firebas
 ## Useful commands
 
 ```sh
-flutter pub get
-dart test packages/anit_core
-flutter test packages/anit_data
-flutter test
-dart run build_runner build --delete-conflicting-outputs
+dart pub get
+dart test packages/core/core_common
+cd apps/mobile_app && flutter test
+cd packages/features/feature_post && dart run build_runner build
 ```
 
-Run `build_runner` from `packages/anit_data` after adding a Drift table.
+Run `build_runner` from `packages/features/feature_post` after changing the Drift table.
