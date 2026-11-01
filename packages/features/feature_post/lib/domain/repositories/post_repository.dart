@@ -1,6 +1,7 @@
 import '../entities/post.dart';
 
-/// Loads posts from the network, stores them, and returns the saved rows.
+/// Returns saved posts. An empty database is filled from the network.
+/// When rows already exist, a failed network call returns those rows.
 abstract interface class PostRepository {
   Future<List<Post>> refresh();
 }

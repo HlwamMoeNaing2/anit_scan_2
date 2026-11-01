@@ -66,6 +66,23 @@ void main() {
     ]);
 
     api.failNext = true;
+    final shown = await repository.refresh();
+
+    expect(shown, const [
+      Post(id: 2, userId: 1, title: 'Second', body: 'Body 2'),
+    ]);
+    final rows = await database.select(database.posts).get();
+    expect(rows.map((row) => row.id), [2]);
+  });
+
+  test('an empty database still reports a failed request', () async {
+    final database = PostDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = PostRepositoryImpl(
+      remote: _ScriptedRemote([])..failNext = true,
+      local: DriftPostLocalDataSource(database),
+    );
+
     await expectLater(
       repository.refresh(),
       throwsA(
@@ -76,9 +93,6 @@ void main() {
         ),
       ),
     );
-
-    final rows = await database.select(database.posts).get();
-    expect(rows.map((row) => row.id), [2]);
   });
 
   test('refresh stores the response and returns the database rows in id order', () async {
